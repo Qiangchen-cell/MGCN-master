@@ -25,7 +25,6 @@ Clone this repo
 
 ```bash
 git clone https://github.com/Qiangchen-cell/MGCN-master.git
-cd MGCN
 ```
 
 Install dependencies

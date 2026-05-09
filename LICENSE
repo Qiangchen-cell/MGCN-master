@@ -1,0 +1,17 @@
+Academic Research License
+
+Copyright (c) 2026 MGCN authors.
+
+This repository is released for academic research and non-commercial use. You may use,
+copy, modify, and distribute the code for research purposes, provided that this license
+notice and appropriate acknowledgements are included.
+
+The software is provided "as is", without warranty of any kind, express or implied,
+including but not limited to the warranties of merchantability, fitness for a particular
+purpose, and noninfringement. In no event shall the authors be liable for any claim,
+damages, or other liability arising from the use of this software.
+
+This project builds on components from CADA, BLIP, NLTK, IRRA, PyTorch, Hugging Face
+Transformers, and related third-party libraries. Users are responsible for complying
+with the licenses of those projects and with the terms of the datasets used for
+evaluation.

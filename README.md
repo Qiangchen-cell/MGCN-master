@@ -24,7 +24,7 @@ Experiments on three TPReID benchmarks across three incomplete-modality training
 Clone this repo
 
 ```bash
-git clone https://github.com/Qiangchen-cell/MGCN.git
+git clone https://github.com/Qiangchen-cell/MGCN-master.git
 cd MGCN
 ```
 

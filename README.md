@@ -86,11 +86,11 @@ tokenizer = BertTokenizer.from_pretrained(bert_localpath)
 
 Download MGCN checkpoints for the three datasets under the easy setting and put them at **./checkpoint**:
 
-| Dataset | Checkpoint                                                                                                |
-| --- |-----------------------------------------------------------------------------------------------------------|
-| CUHK-PEDES | [cuhk_easy_beast.pth](https://drive.google.com/file/d/1MUuo21WnIIR8kkC0r3IHpmn6Y_SOtglQ/view?usp=sharing) |
-| ICFG-PEDES | [icfg_easy_best.pth](https://drive.google.com/file/d/1n8wboh6CmN2bSRwE1YaQ2Nhnq-ObqACX/view?usp=drive_link)    |
-| RSTPReid | [rstp_easy_best.pth](TODO_ADD_RSTP_CHECKPOINT_URL)                                                             |
+| Dataset | Checkpoint                                                                                               |
+| --- |----------------------------------------------------------------------------------------------------------|
+| CUHK-PEDES | [cuhk_easy_beast.pth](https://pan.baidu.com/s/1ZAbVMFbxmG9DVxDidNvx1g?pwd=0000) |
+| ICFG-PEDES | [icfg_easy_best.pth](https://pan.baidu.com/s/1ZAbVMFbxmG9DVxDidNvx1g?pwd=0000)   |
+| RSTPReid | [rstp_easy_best.pth](https://pan.baidu.com/s/1ZAbVMFbxmG9DVxDidNvx1g?pwd=0000)                                                            |
 
 Evaluate on CUHK-PEDES:
 

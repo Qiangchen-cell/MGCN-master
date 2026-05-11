@@ -9,19 +9,6 @@ from PIL import Image
 
 from data.utils import pre_caption
 
-
-def _env_flag(name: str, default: str = "0") -> bool:
-    v = os.environ.get(name, default)
-    return str(v).strip().lower() in ("1", "true", "yes", "y", "on")
-
-def _safe_open_rgb(path: str, fallback_size=(224, 224)) -> Image.Image:
-    """Open an image safely. If missing/corrupt, return a black image."""
-    try:
-        return Image.open(path).convert('RGB')
-    except Exception:
-        return Image.new('RGB', fallback_size, (0, 0, 0))
-
-
 def split_dataset_missing(train_data, mode):
     ratio_config = {
         'easy': (0.5, 0.25, 0.25),
@@ -54,32 +41,29 @@ def split_dataset_missing(train_data, mode):
         if pid in full_group:
             pass
         elif pid in text_missing_group:
-            # keep GT caption for private missing-modality recovery supervision
-            new_ann['gt_captions'] = new_ann.get('captions', '')
             new_ann['captions'] = " "
             new_ann['processed_tokens'] = [" "]
         elif pid in image_missing_group:
-            # keep GT image path for private missing-modality recovery supervision
-            new_ann['gt_file_path'] = new_ann.get('file_path', '')
             new_ann['file_path'] = 'BLANK_IMG.jpg'
-        # if pid in text_missing_group:
-        #     new_ann['captions'] = " "
-        #     new_ann['processed_tokens'] = [" "]
-        #     # new_ann['file_path'] = 'BLANK_IMG.jpg'
-        # elif pid in image_missing_group:
-        #     new_ann['file_path'] = 'BLANK_IMG.jpg'
         processed.append(new_ann)
     #processed = [ann for ann in train_data if ann['id'] in full_group]
 
     return processed
 
+def create_blank_image():
+    save_dir = 'datasets/CUHK-PEDES/imgs'
+    save_path = os.path.join(save_dir, 'BLANK_IMG.jpg')
+
+    os.makedirs(save_path, exist_ok=True)
+    img = Image.new("RGB", (384, 384), color=(0, 0, 0))
+    img.save(save_path, quality=95)
 
 def save_json(data, filename):
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2)
 
 def split_CUHK_PEDE():
-    root_dir = '/data0/chenqiang/reid_study/CADA/datasets/CUHK-PEDES'
+    root_dir = 'datasets/CUHK-PEDES'
     raw_dir = 'reid_raw.json'
     all_dir = 'caption_all.json'
 
@@ -131,7 +115,7 @@ def split_CUHK_PEDE():
 
 
 def split_ICFG_PEDE():
-    root_dir = 'datasets/ICFG-PEDES'
+    root_dir = '/workspace/MHA/datasets/ICFG-PEDES'
     raw_dir = 'split.json'
 
     with open(os.path.join(root_dir, raw_dir), 'r') as f:
@@ -144,25 +128,19 @@ def split_ICFG_PEDE():
     return train_list, val_list, test_list
 
 class mix_pede_train(Dataset):
-    def __init__(self, transform, image_root, max_words=72, prompt='', return_masks: bool = False, return_gt: bool = False):
+    def __init__(self, transform, image_root, max_words=72, prompt=''):
         '''
         image_root (string): Root directory of images (e.g. coco/images/)
         ann_root (string): directory to store the annotation file
         '''
-        cuhk_path = os.path.join('datasets', 'CUHK-PEDES', 'imgs')
-        icfg_path = os.path.join('datasets', 'ICFG-PEDES')
+        cuhk_path = '/workspace/MHA/datasets/CUHK-PEDES/imgs'
+        icfg_path = '/workspace/MHA/datasets/ICFG-PEDES/'
         train_list, _, _ = split_CUHK_PEDE()
         self.annotation = train_list
         self.transform = transform
         self.image_root = image_root
         self.max_words = max_words
         self.prompt = prompt
-        self.return_masks = return_masks
-        self.return_gt = return_gt
-        # Optional masks/GT are only used by private training code.
-        if _env_flag('MGCN_RETURN_MISSING_GT'):
-            self.return_masks = True
-            self.return_gt = True
 
         self.img_ids = {}
         n = 0
@@ -190,45 +168,31 @@ class mix_pede_train(Dataset):
 
     def __getitem__(self, index):
         ann = self.annotation[index]
-        image = _safe_open_rgb(ann['file_path'])
+        image = Image.open(ann['file_path'])
         image = self.transform(image)
         captions = ann['captions']
-        captions = self.prompt + pre_caption(captions, self.max_words)
-
-        if not self.return_masks and not self.return_gt:
-            return image, captions, self.img_ids[ann['id']]
-
-        # mix dataset typically has no synthetic missing by default
-        mask_img = 1
-        mask_txt = 1
-        gt_image = None
-        gt_caption = None
-        if self.return_gt:
-            gt_caption = captions
-            gt_image = image
-
-        return image, captions, self.img_ids[ann['id']], mask_img, mask_txt, gt_image, gt_caption
+        captions = self.prompt+pre_caption(captions, self.max_words)
+        return image, captions, self.img_ids[ann['id']]
 
 
 
 class cuhk_pede_train(Dataset):
-    def __init__(self, transform, image_root, max_words=72, prompt='', return_masks: bool = False, return_gt: bool = False, missing_mode: str = 'easy'):
+    def __init__(self, transform, image_root, max_words=72, prompt=''):
         '''
         image_root (string): Root directory of images (e.g. coco/images/)
         ann_root (string): directory to store the annotation file
         '''
+        create_blank_image()
+
         train_list, _, _ = split_CUHK_PEDE()
 
-        train_list = split_dataset_missing(train_list, missing_mode)
+        train_list = split_dataset_missing(train_list, 'easy')
 
         self.annotation = train_list
         self.transform = transform
         self.image_root = image_root
         self.max_words = max_words
         self.prompt = prompt
-
-        self.return_masks = return_masks
-        self.return_gt = return_gt
 
         self.img_ids = {}
         n = 0
@@ -243,42 +207,12 @@ class cuhk_pede_train(Dataset):
 
     def __getitem__(self, index):
         ann = self.annotation[index]
-
-        # -------- observed (possibly missing) inputs --------
         image_path = self.image_root
-        image = _safe_open_rgb(os.path.join(image_path, ann['file_path']))
+        image = Image.open(os.path.join(image_path,ann['file_path']))
         image = self.transform(image)
-
-        captions_raw = ann.get('captions', '')
-        captions = self.prompt + pre_caption(captions_raw, self.max_words)
-
-        if not self.return_masks and not self.return_gt:
-            return image, captions, self.img_ids[ann['id']]
-
-        # -------- explicit missing masks --------
-        is_img_missing = os.path.basename(ann.get('file_path', '')) == 'BLANK_IMG.jpg'
-        # treat empty / whitespace-only caption as missing
-        is_txt_missing = (str(captions_raw).strip() == '') or (str(captions_raw).strip() == ' ')
-        mask_img = 0 if is_img_missing else 1
-        mask_txt = 0 if is_txt_missing else 1
-
-        # -------- optional GT (only meaningful when synthetic missing is used) --------
-        gt_image = None
-        gt_caption = None
-        if self.return_gt:
-            # If we injected missing, try to recover GT from cached fields; otherwise fall back to current input.
-            if is_img_missing and ann.get('gt_file_path'):
-                gt_image = _safe_open_rgb(os.path.join(image_path, ann['gt_file_path']))
-                gt_image = self.transform(gt_image)
-            else:
-                gt_image = image
-
-            if is_txt_missing and ann.get('gt_captions') is not None:
-                gt_caption = self.prompt + pre_caption(str(ann.get('gt_captions', '')), self.max_words)
-            else:
-                gt_caption = captions
-
-        return image, captions, self.img_ids[ann['id']], mask_img, mask_txt, gt_image, gt_caption
+        captions = ann['captions']
+        captions = self.prompt+pre_caption(captions, self.max_words)
+        return image, captions, self.img_ids[ann['id']]
 
 
 class cuhk_pede_caption_eval(Dataset):

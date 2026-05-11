@@ -47,6 +47,15 @@ def split_dataset_missing(train_data, mode):
 
     return processed
 
+
+def create_blank_image():
+    save_dir = 'datasets/RSTPReid/imgs'
+    save_path = os.path.join(save_dir, 'BLANK_IMG.jpg')
+
+    os.makedirs(save_path, exist_ok=True)
+    img = Image.new("RGB", (384, 384), color=(0, 0, 0))
+    img.save(save_path, quality=95)
+
 def split_RSTP_PEDE():
     root_dir = '/data0/chenqiang/reid_study/albef-2/data/RSTPReid'
     raw_dir = 'data_captions.json'
@@ -75,7 +84,7 @@ def split_RSTP_PEDE():
 
 class rstp_pede_train(Dataset):
     def __init__(self, transform, image_root, max_words=72, prompt=''):
-
+        create_blank_image()
         train_list, _, _= split_RSTP_PEDE()
 
         train_list = split_dataset_missing(train_list, 'easy')

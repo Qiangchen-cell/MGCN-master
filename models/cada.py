@@ -17,7 +17,9 @@ import os
 import nltk
 import math
 
-def detect_missing_modalities_input_only(image_tensor: torch.Tensor, text_input: dict, tokenizer):
+def detect_missing_modalities_input_only(image_tensor: torch.Tensor,
+                                         text_input: dict,
+                                         tokenizer):
     B = image_tensor.size(0)
 
     def denormalize_image_tensor(image_tensor, mean, std):
@@ -43,7 +45,7 @@ def detect_missing_modalities_input_only(image_tensor: torch.Tensor, text_input:
     return is_image_missing, is_text_missing
 
 
-class MGCN(nn.Module):
+class CADA(nn.Module):
     def __init__(self,
                  med_config='configs/med_config.json',
                  image_size=224,
@@ -85,7 +87,7 @@ class MGCN(nn.Module):
         if 'attr' in self.task:
             self.text_decoder = BertMLMLMHeadModel(config=med_config)
 
-        self.feature_generator = FeatureGenerator(image_feat_dim=vision_width, text_feat_dim=text_width, noise_dim=100, hidden_dim=512)
+        self.feature_generator = FeatureGenerator(image_feat_dim=vision_width, text_feat_dim=vision_width, noise_dim=100, hidden_dim=512)
 
     def forward(self, image, caption, idx):
 
@@ -334,7 +336,7 @@ class MGCN(nn.Module):
             return input_ids
 
 def build_model(pretrained='',mode='train',**kwargs):
-    model = MGCN(**kwargs)
+    model = CADA(**kwargs)
     if pretrained:
         model,msg = load_checkpoint(model,pretrained,mode)
         print('missing keys:',msg.missing_keys)

@@ -39,27 +39,23 @@ def split_dataset_missing(train_data, mode):
     for ann in train_data:
         new_ann = ann.copy()
         pid = new_ann['id']
-        # if pid in full_group:
-        #     new_ann['captions'] = " "
-        #     new_ann['processed_tokens'] = [" "]
-        #     new_ann['file_path'] = 'BLANK_IMG.jpg'
         if pid in text_missing_group:
             new_ann['captions'] = " "
             new_ann['processed_tokens'] = [" "]
-            new_ann['file_path'] = 'BLANK_IMG.jpg'
         elif pid in image_missing_group:
-            new_ann['captions'] = " "
-            new_ann['processed_tokens'] = [" "]
             new_ann['file_path'] = 'BLANK_IMG.jpg'
-        # if pid in text_missing_group:
-        #     new_ann['captions'] = " "
-        #     new_ann['processed_tokens'] = [" "]
-        #     # new_ann['file_path'] = 'BLANK_IMG.jpg'
-        # elif pid in image_missing_group:
-        #     new_ann['file_path'] = 'BLANK_IMG.jpg'
         processed.append(new_ann)
 
     return processed
+
+
+def create_blank_image():
+    save_dir = 'datasets/ICFG-PEDES/imgs'
+    save_path = os.path.join(save_dir, 'BLANK_IMG.jpg')
+
+    os.makedirs(save_path, exist_ok=True)
+    img = Image.new("RGB", (384, 384), color=(0, 0, 0))
+    img.save(save_path, quality=95)
 
 def split_ICFG_PEDE():
     root_dir = '/data0/chenqiang/reid_study/albef-2/data/ICFG-PEDES'
@@ -87,7 +83,7 @@ def split_ICFG_PEDE():
 
 class icfg_pede_train(Dataset):
     def __init__(self, transform, image_root, max_words=72, prompt=''):
-
+        create_blank_image()
         train_list, _, _= split_ICFG_PEDE()
 
         train_list = split_dataset_missing(train_list, 'medium')
